@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <title>Chatアプリ</title>
+</head>
+
+<body>
+
+    <!-- コンテンツ表示画面 -->
+    <div id="chat">
+        <div>
+            名前: <input type="text" id="uname">
+        </div>
+        <div>
+            <textarea name="" id="text" cols="30" rows="10"></textarea>
+            <button id="send">送信</button>
+        </div>
+        <div id="output" style="overflow: auto;height: 300px; width:70%;"></div>
+    </div>
+
+    <!--/ コンテンツ表示画面 -->
+
+
+
+    <!-- JQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <!-- JQuery -->
+
+
+    <!--** 以下Firebase **-->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+        import { getDatabase, ref, push, set, onChildAdded, remove, onChildRemoved }
+            from "https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-database.js";
+
+        // Your web app's Firebase configuration
+        // ⭐️重要！⭐️ apiKeyはGithabにはアップせず、Formに記載する。
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4jyd-aDCDhcbXatKOk2KeGfIIbKS1RBM",
+            authDomain: "fir-demo-e68b1.firebaseapp.com",
+            projectId: "fir-demo-e68b1",
+            storageBucket: "fir-demo-e68b1.appspot.com",
+            messagingSenderId: "638832899683",
+            appId: "1:638832899683:web:5a687b00bb6df406766a56"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+
+        // Realtaime DBに接続する
+        const db = getDatabase(app);
+        const dbRef = ref(db, "chat");
+
+        
+        // $("#text").on("keydown", function(e){
+        //     console.log(e);
+        // })
+
+        // 送信ボタンが押されたらデータをDBに送信
+        $("#send").on("click", function () {
+            // 保存したいデータのオブジェクトを作る
+            const msg = {
+                uname: $("#uname").val(),
+                text: $("#text").val()
+            };
+            console.log(msg);
+            $("#uname").val("");
+            $("#text").val("");
+
+            // 新規のデータを送れる状態にセット:pushを使う＆新しいIDを作っている。
+            const newPostRef = push(dbRef); //ユニークキーを発行する
+            
+            // DBに値を送信: setを使う
+            set(newPostRef, msg);
+        });
+
+        //＃outputの場所にデータを表示する on：イベントが実行されたら childadd：子要素が新たに追加されたら keyはユニークなIDのこと。
+        onChildAdded(dbRef, function (data) {
+            const msg = data.val();
+            const key = data.key;
+
+            $("#output").append(`<p id="${key}" class="message">${msg.uname}: ${msg.text}</p><button class="delete-btn">削除</button>`)
+        });
+
+        $("#output").on("click", ".delete-btn", function () {
+            const msgId = $(this).prev().attr("id");
+            const chatId = "chat"+"/"+ msgId;
+            const chatRef = ref(db, chatId);
+            remove(chatRef);
+            $(this).prev().remove();
+            $(this).remove();
+            
+        });
+
+    </script>
+
+</body>
+
+</html>
